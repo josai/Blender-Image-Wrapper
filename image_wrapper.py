@@ -4,8 +4,8 @@ def get_filename(path):
     '''
     Gets filename from full path.
     '''
-    if '/' in path:
-        return(path.replace('\\', ' ').split[-1])
+    if '\\' in path:
+        return(path.replace('\\', ' ').split()[-1])
     else:
         return (path)
 
@@ -34,12 +34,46 @@ def remove_all_images():
         bpy.data.images.remove(img)
 
 
+def flatten_array(array):
+    return ([item for sublist in array for item in sublist])
+
+
+def delete_k(a_list, k):
+    count = 0
+    new_list = []
+    for i in a_list:
+        if count == k:
+            count = 0
+            continue
+        new_list.append(i)
+        count = count + 1
+    return (new_list)
+
+
+def compare_images(a, b, use_alpha=False):
+    '''
+    Compares abosulte differences in pixel values of two
+    images(Burrito objects) of equal size.
+    '''
+    if not use_alpha:
+        k = 3
+        a = delete_k(a.pixels, 3)
+        b = delete_k(b.pixels, 3)
+    differences = []
+    index = 0
+    for n in a:
+        diff = abs(n - b[index])
+        differences.append(diff)
+        index = index + 1
+    return (differences)
+
+
 class Burrito(object):
     '''
     Wraps the greasy and meaty blender image api into
     something more light weight and easier to consume.
     '''
-    def __init__(self, filename='', size=[1, 1], name="NewImage"):
+    def __init__(self, filename='', size=[500, 500], name="NewImage"):
         '''
         If file name is empty/default create a new image.
         '''
@@ -51,9 +85,9 @@ class Burrito(object):
             self.img_obj = bpy.data.images.load(path)
             self.name = get_filename(filename)
 
+        self.img_obj.use_alpha = False
         self.pixels = self.img_obj.pixels[:]
         self.file_type = 'PNG'
-        print (self.pixels)
 
     def update_info(self):
         '''
@@ -67,6 +101,6 @@ class Burrito(object):
     def save(self, path='burritos\\'):
         self.update_info()
         file_type = '.' + self.file_type.lower()
-        path = validate_path(path + self.img_obj.name)
-        self.img_obj.filepath_raw = path + file_type
+        path = validate_path(path)
+        self.img_obj.filepath_raw = path + self.name # + file_type
         self.img_obj.save()
